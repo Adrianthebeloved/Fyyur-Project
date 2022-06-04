@@ -60,32 +60,60 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #status: done
+  try:
+    cities = Venue.query.distinct(Venue.city, Venue.state).all();
+    data=[]
+    for city in cities:
+      city_info = {
+        'city':city.city,
+        'state':city.state
+      }
+      venues = Venue.query.filter_by(city=city.city, state=city.state)
+      venue_list = []
+      for venue in venues:
+        upcoming_show = Show.query.filter(Show.start_time > datetime.today(), Show.venue_id==venue.id).count()
+        venue_list.append({
+          'id': venue.id,
+          'name': venue.name,
+          'num_upcoming_shows': upcoming_show
+        })
+      city_info['venues'] = venue_list
+      data.append(city_info)
+  except Exception as err:
+    print('Error!!! ' + str(err))
+  finally:
+    return render_template('pages/venues.html', areas=data)
   
-  #declare the data variable as an empty list
-  data =[]
-  # use SQLAlchemy to query the Venue model to get a distinct list of venues
-  cities = db.session.query(Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
-  #use a for loop to iterate through the venues
-  for city in cities:
-    cityinfo = dict(city)
-    #further query for further filtering
-    venues = db.session.query(Venue.id,Venue.name).filter(
-      and_(
-        Venue.city == city.city,
-        Venue.state == city.state
-      )
-    ).all()
-    cityinfo['venues'] = [{
-      'id' : v.id,
-      'name' : v.name,
-      'num_upcoming_shows' : Show.query.filter(Show.venue_id == v.id).count()
-    } for v in venues]
-    #append query results to the empty list variable
-    data.append(cityinfo)
 
-  return render_template('pages/venues.html', areas=data)
+  # TODO: replace with real venues data.
+  #status: done and reviewed
+  
+
+
+  # Previous venues page code with comments before review:
+
+  # #declare the data variable as an empty list
+  # data =[]
+  # # use SQLAlchemy to query the Venue model to get a distinct list of venues
+  # cities = db.session.query(Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
+  # #use a for loop to iterate through the venues
+  # for city in cities:
+  #   cityinfo = dict(city)
+  #   #further query for further filtering
+  #   venues = db.session.query(Venue.id,Venue.name).filter(
+  #     and_(
+  #       Venue.city == city.city,
+  #       Venue.state == city.state
+  #     )
+  #   ).all()
+  #   cityinfo['venues'] = [{
+  #     'id' : v.id,
+  #     'name' : v.name,
+  #     'num_upcoming_shows' : Show.query.filter(Show.venue_id == v.id).count()
+  #   } for v in venues]
+  #   #append query results to the empty list variable
+  #   data.append(cityinfo)
+  # #return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
